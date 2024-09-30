@@ -6,14 +6,68 @@ def get_bits(number, idx1, idx2):
         low, num = idx1, idx2-idx1
     return (number >> low) & ((1 << num)-1)
 
-
 def execute(instruction, oldPC):
     """Handles a single instruction, returning the new PC"""
     global M, R
     
     # to do: add instructions here
-    
-    return oldPC + 1
+
+    b = get_bits(instruction,0,2)
+    a = get_bits(instruction,2,4)
+    icode = get_bits(instruction,4,7)
+    reserve_bit = get_bits(instruction,7,8)
+
+    if reserve_bit == 1:
+        return oldPC
+    match icode:
+        case 0:
+            R[a] = R[b]
+            return oldPC + 1
+        case 1:
+            R[a] += R[b]
+            return oldPC + 1
+        case 2:
+            R[a] &= R[b]
+            return oldPC + 1
+        case 3:
+            R[a] = M[R[b]]
+            return oldPC + 1
+        case 4:
+            M[R[b]] = R[a]
+            return oldPC + 1
+        case 5:
+            if b == 0:
+                R[a] = ~R[a]
+                return oldPC + 1
+            elif b == 1:
+                R[a] = -R[a]
+                return oldPC + 1
+            elif b == 2:
+                R[a] = not R[a]
+                return oldPC + 1
+            elif b == 3:
+                R[a] = oldPC
+                return oldPC + 1
+        case 6:
+            if b == 0:
+                R[a] = M[oldPC+1]
+                return oldPC + 2
+            elif b == 1:
+                R[a] += M[oldPC+1]
+                return oldPC + 2
+            elif b == 2:
+                R[a] &= M[oldPC+1]
+                return oldPC + 2
+            elif b == 3:
+                R[a] = M[M[oldPC+1]]
+                return oldPC + 2
+
+        case 7:
+            if R[a] == 0 or R[a] >= 0x80:
+                oldPC = R[b]
+                return oldPC
+            else:
+                return oldPC + 1
 
 
 
